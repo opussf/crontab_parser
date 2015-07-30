@@ -30,7 +30,7 @@ class SimpleCrontabEntry(object):
     Only deals with the first 5 fields of a normal crontab
     entry."""
 
-    def __init__(self, entry, expiration = 0):
+    def __init__(self, entry = None, expiration = 0):
         self.__setup_timespec()
         self.set_value(entry)
         self.set_expiration(expiration)
@@ -38,8 +38,11 @@ class SimpleCrontabEntry(object):
     def set_expiration(self, val):
         self.expiration = datetime.timedelta(minutes=val)
 
-    def set_value(self, entry):
+    def set_value(self, entry = None):
         self.data = entry
+        if not self.data:
+            self.fields = None
+            return
         fields = re.findall("\S+", self.data)
         if len(fields) != 5 :
             raise ValueError("Crontab entry needs 5 fields")
@@ -116,21 +119,21 @@ class SimpleCrontabEntry(object):
         a "first to last" expression. Then the expression will be splitted
         into the komma separated subexpressions.
 
-        Each subexpression will run through: 
+        Each subexpression will run through:
         1. Check for stepwidth in range (if it has one)
         2. Check for validness of range-expression (if it is one)
         3. If it is no range: Check for simple numeric
         4. If it is numeric: Check if it's in range
 
         If one of this checks failed, an exception is raised. Otherwise it will
-        do nothing. Therefore this function should be used with 
-        a try/except construct.  
+        do nothing. Therefore this function should be used with
+        a try/except construct.
         """
 
         timerange = self.timeranges[type]
 
-        # Replace alias names only if no leading and following alphanumeric and 
-        # no leading slash is present. Otherwise terms like "JanJan" or 
+        # Replace alias names only if no leading and following alphanumeric and
+        # no leading slash is present. Otherwise terms like "JanJan" or
         # "1Feb" would give a valid check. Values after a slash are stepwidths
         # and shouldn't have an alias.
         if type == "month": alias = self.monthnames.copy()
@@ -353,9 +356,11 @@ class SimpleCrontabEntry(object):
             return False
         return True
 
-    
+
     def matches(self, time = datetime.datetime.now()):
         """Checks if given time matches cron pattern."""
+        if not self.fields:
+             raise AttributeError("Crontab needs an entry to check against")
         return time.month in self.fields['month'] and \
             time.day in self.fields['day'] and \
             time.hour in self.fields['hour'] and \
@@ -405,7 +410,7 @@ class SimpleCrontabEntry(object):
         else:
             base = datetime.datetime(base.year, base.month, prev_day, base.hour, base.minute)
         return base
-    
+
     def prev_run(self, time = datetime.datetime.now()):
         """Calculates when the previous execution was."""
         base = self.matches(time) and time or self.next_run(time)
@@ -439,9 +444,9 @@ class SimpleCrontabEntry(object):
         date = self.__prev_date(base, prev_day, carry_day)
         if not prev_run or prev_run < date:
             prev_run = date
-            
+
         return prev_run
-    
+
     def is_expired(self, time = datetime.datetime.now()):
         """If the expiration parameter has been set this will check
         wether too much time has been since the cron-entry. If the

@@ -183,3 +183,75 @@ datetime.datetime(1970, 4, 30, 5, 59)
 
 >>> e.prev_run(datetime(1970, 1, 1)) # 1968 is the nearest leap-year.
 datetime.datetime(1968, 2, 29, 10, 7)
+
+
+
+``empty`` instantiation throws exceptions on use
+
+
+
+>>> e = None
+>>> e = SimpleCrontabEntry()
+
+>>> e.matches()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+>>> e.next_run()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+>>> e.prev_run()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+
+
+``empty`` instantiation works if entry is set
+
+
+
+>>> e = None
+>>> e = SimpleCrontabEntry()
+
+>>> e.set_value('30 8 10 6 *')
+>>> e.matches(datetime(1970, 6, 10, 8, 30))
+True
+
+>>> e.set_value('0 9-18 * * 1-5')
+>>> e.next_run(datetime(1970, 1, 1, 11)) # 1/1/1970 is Thursday.
+datetime.datetime(1970, 1, 1, 12, 0)
+
+>>> e.set_value('* 5 * * *')
+>>> e.prev_run(datetime(1970, 5, 1))
+datetime.datetime(1970, 4, 30, 5, 59)
+
+
+
+``set_value(None)`` clears the entry
+
+
+
+>>> e = None
+>>> e = SimpleCrontabEntry('* * * * *')
+>>> e.set_value()
+
+>>> e.matches()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+>>> e.next_run()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+>>> e.prev_run()
+Traceback (most recent call last):
+	...
+AttributeError: Crontab needs an entry to check against
+
+

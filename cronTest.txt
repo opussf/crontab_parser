@@ -254,4 +254,17 @@ Traceback (most recent call last):
 	...
 AttributeError: Crontab needs an entry to check against
 
+```Weekly when match day is last day of a 31 day month```
+
+>>> e = None
+>>> e = SimpleCrontabEntry('0 20 * * 3')	# 8pm on Wednesday
+
+>>> e.next_run(datetime(2016, 8, 24, 20, 00)) # 24 Aug 2016, 20:01, next Wed should be 31 Aug
+datetime.datetime(2016, 8, 31, 20, 0)
+
+>>> e.next_run(datetime(2016, 8, 31, 20, 01)) # 31 Aug 2016, next Wednesday should be the 7 Sep
+datetime.datetime(2016, 9, 7, 20, 0)
+
+>>> e.next_run(datetime(2016, 11, 30, 20, 01)) # 30 Nov 2016, next Wednesday should be 7 Dec
+datetime.datetime(2016, 12, 7, 20, 0)
 

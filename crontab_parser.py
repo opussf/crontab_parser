@@ -62,9 +62,22 @@ class SimpleCrontabEntry( object ):
 	def matches( self, checkTime = datetime.datetime.now() ):
 		"""Checks if given time matches cron pattern.
 		This takes a datetime object or epoch seconds"""
+		#print("matches( %s ).  type: %s" % (checkTime,type(checkTime)))
 		if not self.fields:
 			raise AttributeError("Crontab needs an entry to check against")
-		return False
+		if not isinstance( checkTime, (int, float, datetime.datetime) ):
+			raise ValueError( "Time to check can only be an int, float, or a datetime object" )
+
+		if isinstance( checkTime, (int, float) ):
+			checkTime = datetime.datetime.fromtimestamp( checkTime )
+			print(checkTime)
+
+		return checkTime.month in self.fields['month'] and \
+				checkTime.day in self.fields['day'] and \
+				checkTime.hour in self.fields['hour'] and \
+				checkTime.minute in self.fields['minute'] and \
+				checkTime.weekday() + 1 in [d or 7 for d in self.fields['weekday']]
+
 
 	def __setup( self ):
 		self.fieldnames = {
@@ -546,12 +559,18 @@ if __name__ == "__main__" :
 			self.assertRaises( ValueError, self.e.set_value, "* * * * sunmon" )
 		def test_set_value_handles_3charDOW_badValue( self ):
 			self.assertRaises( ValueError, self.e.set_value, "* * * * 1sun" )
+		def test_matches_givenAString( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertRaises( ValueError, self.e.matches, "1970-6-10 8:30" )
 
 
 		####### Tests from the original
 		def test_matches_specificDayTime_seconds( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertTrue( self.e.matches( self.datetimeToSeconds( datetime.datetime(1970, 6, 10, 8, 30) ) ), "This should match." )
+		def test_matches_specificDayTime_seconds_int( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertTrue( self.e.matches( 13854600 ) )
 		def test_matches_specificDayTime_datetime( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 6, 10, 8, 30 ) ), "This should match." )
@@ -560,7 +579,7 @@ if __name__ == "__main__" :
 			self.assertFalse( self.e.matches( self.datetimeToSeconds( datetime.datetime(1970, 6, 10, 8, 31) ) ) )
 		def test_matches_specificDayTime_datetime_false( self ):
 			self.e.set_value('30 8 10 6 *')
-			self.assertTrue( self.e.matches( datetime.datetime( 1970, 6, 10, 8, 31 ) ), "This should match." )
+			self.assertFalse( self.e.matches( datetime.datetime( 1970, 6, 10, 8, 31 ) ), "This should match." )
 		def test_matches_dow( self ):
 			self.e.set_value('* * * * 0')
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 4 ) ), "1/4/1970 is Sunday." )
@@ -587,7 +606,7 @@ if __name__ == "__main__" :
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1, 10 ) ) )
 		def test_matches_limitedHourRange_False( self ):
 			self.e.set_value('0 9-18 * * *')
-			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+			self.assertFalse( self.e.matches( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
 		def test_matches_allStar_matches_01( self ):
 			self.e.set_value('* * * * *')
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ) )

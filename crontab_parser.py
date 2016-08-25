@@ -56,7 +56,8 @@ class SimpleCrontabEntry( object ):
 		self.fields["month"]  = fields[3]
 		self.fields["weekday"]= fields[4]
 		print( self.fields )
-		print( self.__is_valid() )
+		if not self.__is_valid():
+			raise ValueError( "Bad cronstring" )
 
 	def matches( self, checkTime = datetime.datetime.now() ):
 		"""Checks if given time matches cron pattern.
@@ -118,9 +119,14 @@ class SimpleCrontabEntry( object ):
 	def __is_valid( self ):
 		"""Two fold function. Validate the cron entry by expanding the data.
 		Returns True or False"""
-		for fieldName, expression in self.fields.items():
-			print("%s %s" % (fieldName, expression))
-			print( self.__expand_field( fieldName, expression ) )
+		try:
+			for fieldName, expression in self.fields.items():
+				print("%s %s" % (fieldName, expression))
+				self.__expand_field( fieldName, expression )
+		except ValueError,(specific,caused,explanation):
+			print("PROBLEM TYPE: %s, FIELD: %s -> %s" % ( specific, caused, explanation ))
+			return False
+		return True
 
 	def __expand_field( self, fieldName, expression ):
 		""" Takes the fieldname, and the expression to expand.
@@ -129,7 +135,6 @@ class SimpleCrontabEntry( object ):
 		"""
 		print("__expand_field( %s, %s )" % (fieldName, expression))
 		timerange = self.timeranges[ fieldName ]
-		print(timerange)
 
 		# Replace alias names
 		if fieldName == "month": alias = self.monthnames.copy()
@@ -141,37 +146,62 @@ class SimpleCrontabEntry( object ):
 
 		# Replace the wildcard with a range expression
 		expression = expression.replace("*", "%s-%s" % (min(timerange), max(timerange)))
-		print expression
 
 		# create a list of the comma seperated expressions
 		expressionlist = expression.split(",")
 		stepPattern = re.compile("^(\d+-\d+)/(\d+)$")
 		rangePattern = re.compile("^(\d+)-(\d+)$")
-		print expressionlist
 
 		expressionRange = []
 		for expr in expressionlist:
-			print expr
-			step = None
+			step = 1  # set to one as a default
+			rangeList = None
 
 			result = stepPattern.match(expr)
 			if result:  # This is a pattern with a step value
 				expr = result.groups()[0]
 				# store the step value
 				step = int(result.groups()[1])
+				print("Step: %s" % (step,))
 				# step needs to be in the timerange.  0-59/60 would only match one anyway
 				if step not in timerange:
 					raise ValueError("stepwidth",
 							self.fieldnames[fieldName],
-							"Must be in the range of %s-%s" % (min(timerange), max(timerange)))
+							"Must be in the range of %s-%s." % (min(timerange), max(timerange)))
 
+			# process the non-step data
 			result = rangePattern.match(expr)
-			if result:
-				# check for values out of the range limit
-				pass
+			if result:  # this is a range
+				if (int(result.groups()[0]) not in timerange) or \
+						(int(result.groups()[1]) not in timerange):
+					# the range had invalid min or max values
+					raise ValueError("range",
+							self.fieldnames[fieldName],
+							"Must be in the range of %s-%s." % (min(timerange), max(timerange)))
+				rangeList = range( int(result.groups()[0]), int(result.groups()[1])+1, step )
 
-			print result
+			elif not expr.isdigit(): # not a range, not a digit, raise exception
+				raise ValueError("fixed",
+						self.fieldnames[fieldName],
+						"%s is not a number." % ( expr, ) )
 
+			elif int(expr) not in timerange: # not a range, is a digit, check value
+				raise ValueError("fixed",
+						self.fieldnames[fieldName],
+						"Must be in the range of %s-%s." % (min(timerange), max(timerange)))
+
+			if rangeList:
+				expressionRange.extend(rangeList)
+			else:
+				expressionRange.append(int(expr))
+
+		# convert to a set and back to a list to remove duplicates
+		expressionRange = list(set(expressionRange))
+		# sort this?
+
+		print("Equates to: %s" % (expressionRange,))
+		# push the generated list back to the field
+		self.fields[fieldName] = expressionRange
 
 
 
@@ -638,12 +668,17 @@ if __name__ == "__main__" :
 			self.assertRaises( ValueError, self.e.set_value, "* * 0-1 * *")
 		def test_set_value_throwsException_badMaxValue( self ):
 			self.assertRaises( ValueError, self.e.set_value, "58-60 * * * *")
+		def test_set_value_throwsException_wildcardRangeNotValid( self ):
+			self.assertRaises( ValueError, self.e.set_value, "*-* * * * *" )
+		def test_set_value_throwsException_wildcardStepNotValid( self ):
+			self.assertRaises( ValueError, self.e.set_value, "*/* * * * *" )
 		def test_set_value_oddPatterns_01( self ):
-			self.e.set_value("*-* * * * *")
+			self.e.set_value("1-5,5-10,1-10 * * * *")
 		def test_set_value_oddPatterns_02( self ):
 			self.e.set_value("*,* * * * *")
 		def test_set_value_oddPatterns_03( self ):
-			self.e.set_value("*/* * * * *")
+			self.e.set_value("59,58,57 * * * *")
+			self.assertEqual( [57,58,59], self.e.fields["minute"])
 		def test_set_value_oddPatterns_04( self ):
 			self.e.set_value("* * * jan-dec/2 *")
 		def test_set_value_handles_3charMonths_true( self ):

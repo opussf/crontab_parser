@@ -50,8 +50,11 @@ class SimpleCrontabEntry( object ):
 
 		# store the seperate fields
 		self.fields = {}
-		for i in range(len(self.fieldnames)):
-			self.fields[self.fieldnames[i]] = fields[i]
+		self.fields["minute"] = fields[0]
+		self.fields["hour"]   = fields[1]
+		self.fields["day"]    = fields[2]
+		self.fields["month"]  = fields[3]
+		self.fields["weekday"]= fields[4]
 		print( self.fields )
 		print( self.__is_valid() )
 
@@ -63,7 +66,13 @@ class SimpleCrontabEntry( object ):
 		return False
 
 	def __setup( self ):
-		self.fieldnames = [ "minute", "hour", "day", "month", "weekday" ]
+		self.fieldnames = {
+			"minute"  : "Minute",
+			"hour"    : "Hour",
+			"day"     : "Day of Month",
+			"month"   : "Month",
+			"weekday" : "Day of Week",
+		}
 		self.special = {
 			"@reboot"  : '',  # is this valid for this class?
 			"@hourly"  : '0 * * * *',
@@ -137,11 +146,31 @@ class SimpleCrontabEntry( object ):
 		# create a list of the comma seperated expressions
 		expressionlist = expression.split(",")
 		stepPattern = re.compile("^(\d+-\d+)/(\d+)$")
+		rangePattern = re.compile("^(\d+)-(\d+)$")
 		print expressionlist
 
 		expressionRange = []
 		for expr in expressionlist:
 			print expr
+			step = None
+
+			result = stepPattern.match(expr)
+			if result:  # This is a pattern with a step value
+				expr = result.groups()[0]
+				# store the step value
+				step = int(result.groups()[1])
+				# step needs to be in the timerange.  0-59/60 would only match one anyway
+				if step not in timerange:
+					raise ValueError("stepwidth",
+							self.fieldnames[fieldName],
+							"Must be in the range of %s-%s" % (min(timerange), max(timerange)))
+
+			result = rangePattern.match(expr)
+			if result:
+				# check for values out of the range limit
+				pass
+
+			print result
 
 
 
@@ -603,12 +632,20 @@ if __name__ == "__main__" :
 			self.assertRaises( ValueError, self.e.set_value, "* * * * * *" )
 		def test_set_value_throwsException_badStep_emptyStepp( self ):
 			self.assertRaises( ValueError, self.e.set_value, "*/ * * * *")
+		def test_set_value_throwsException_badStep_outOfRange( self ):
+			self.assertRaises( ValueError, self.e.set_value, "*/60 * * * *")
+		def test_set_value_throwsException_badMinValue( self ):
+			self.assertRaises( ValueError, self.e.set_value, "* * 0-1 * *")
+		def test_set_value_throwsException_badMaxValue( self ):
+			self.assertRaises( ValueError, self.e.set_value, "58-60 * * * *")
 		def test_set_value_oddPatterns_01( self ):
 			self.e.set_value("*-* * * * *")
 		def test_set_value_oddPatterns_02( self ):
 			self.e.set_value("*,* * * * *")
 		def test_set_value_oddPatterns_03( self ):
 			self.e.set_value("*/* * * * *")
+		def test_set_value_oddPatterns_04( self ):
+			self.e.set_value("* * * jan-dec/2 *")
 		def test_set_value_handles_3charMonths_true( self ):
 			self.e.set_value( "* * * jan-mar *" )
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is in Jan" )

@@ -160,12 +160,12 @@ class SimpleCrontabEntry( object ):
 			if result:  # This is a pattern with a step value
 				expr = result.groups()[0]
 				# store the step value, this catches 0, is that valid?
-				step = max(1,int(result.groups()[1]))
+				step = int(result.groups()[1])
 				# step needs to be in the timerange.  0-59/60 would only match one anyway
-				if step not in timerange:
+				if (step == 0) or (step not in timerange):
 					raise ValueError("stepwidth",
 							self.fieldnames[fieldName],
-							"Step value (%s) must be in the range of %s-%s." % (step, min(timerange), max(timerange)))
+							"Step value (%s) must be in the range of %s-%s, and not 0." % (step, min(timerange), max(timerange)))
 
 			# process the non-step data
 			result = rangePattern.match(expr)
@@ -500,10 +500,12 @@ if __name__ == "__main__" :
 			self.assertRaises( ValueError, self.e.set_value, "* * * *" )
 		def test_set_value_throwsException_six( self ):
 			self.assertRaises( ValueError, self.e.set_value, "* * * * * *" )
-		def test_set_value_throwsException_badStep_emptyStepp( self ):
+		def test_set_value_throwsException_badStep_emptyStep( self ):
 			self.assertRaises( ValueError, self.e.set_value, "*/ * * * *")
 		def test_set_value_throwsException_badStep_outOfRange( self ):
 			self.assertRaises( ValueError, self.e.set_value, "*/60 * * * *")
+		def test_set_value_throwsException_badStep_0Step( self ):
+			self.assertRaises( ValueError, self.e.set_value, "*/0 */0 */0 */0 */0" )
 		def test_set_value_throwsException_badMinValue( self ):
 			self.assertRaises( ValueError, self.e.set_value, "* * 0-1 * *")
 		def test_set_value_throwsException_badMaxValue( self ):
@@ -521,8 +523,6 @@ if __name__ == "__main__" :
 			self.assertEqual( [57,58,59], self.e.fields["minute"])
 		def test_set_value_oddPatterns_04( self ):
 			self.e.set_value("* * * jan-dec/2 *")
-		def test_set_value_oddPatterns_05( self ):
-			self.e.set_value("*/0 */0 */0 */0 */0")
 		def test_set_value_handles_3charMonths_true( self ):
 			self.e.set_value( "* * * jan-mar *" )
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is in Jan" )

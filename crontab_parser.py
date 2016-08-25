@@ -55,7 +55,7 @@ class SimpleCrontabEntry( object ):
 		self.fields["day"]    = fields[2]
 		self.fields["month"]  = fields[3]
 		self.fields["weekday"]= fields[4]
-		print( self.fields )
+		# convert the fields from strings to lists, report if an error.
 		if not self.__is_valid():
 			raise ValueError( "Bad cronstring" )
 
@@ -119,9 +119,8 @@ class SimpleCrontabEntry( object ):
 	def __is_valid( self ):
 		"""Two fold function. Validate the cron entry by expanding the data.
 		Returns True or False"""
-		try:
+		try: # step through the fields, expand them, report the exception
 			for fieldName, expression in self.fields.items():
-				print("%s %s" % (fieldName, expression))
 				self.__expand_field( fieldName, expression )
 		except ValueError,(specific,caused,explanation):
 			print("PROBLEM TYPE: %s, FIELD: %s -> %s" % ( specific, caused, explanation ))
@@ -133,7 +132,7 @@ class SimpleCrontabEntry( object ):
 		Returns a list of valid values.
 		Throws ValueError if there is a problem.
 		"""
-		print("__expand_field( %s, %s )" % (fieldName, expression))
+		#print("__expand_field( %s, %s )" % (fieldName, expression))
 		timerange = self.timeranges[ fieldName ]
 
 		# Replace alias names
@@ -160,14 +159,13 @@ class SimpleCrontabEntry( object ):
 			result = stepPattern.match(expr)
 			if result:  # This is a pattern with a step value
 				expr = result.groups()[0]
-				# store the step value
-				step = int(result.groups()[1])
-				print("Step: %s" % (step,))
+				# store the step value, this catches 0, is that valid?
+				step = max(1,int(result.groups()[1]))
 				# step needs to be in the timerange.  0-59/60 would only match one anyway
 				if step not in timerange:
 					raise ValueError("stepwidth",
 							self.fieldnames[fieldName],
-							"Must be in the range of %s-%s." % (min(timerange), max(timerange)))
+							"Step value (%s) must be in the range of %s-%s." % (step, min(timerange), max(timerange)))
 
 			# process the non-step data
 			result = rangePattern.match(expr)
@@ -178,6 +176,7 @@ class SimpleCrontabEntry( object ):
 					raise ValueError("range",
 							self.fieldnames[fieldName],
 							"Must be in the range of %s-%s." % (min(timerange), max(timerange)))
+				# do the work, make the range list
 				rangeList = range( int(result.groups()[0]), int(result.groups()[1])+1, step )
 
 			elif not expr.isdigit(): # not a range, not a digit, raise exception
@@ -199,172 +198,13 @@ class SimpleCrontabEntry( object ):
 		expressionRange = list(set(expressionRange))
 		# sort this?
 
-		print("Equates to: %s" % (expressionRange,))
+		#print("Equates to: %s" % (expressionRange,))
 		# push the generated list back to the field
 		self.fields[fieldName] = expressionRange
 
 
 
 ###############
-
-#     def checkfield (self, expr, type):
-#         """Verifies format of Crontab timefields
-
-#         Checks a single Crontab time expression.
-#         At first possibly contained alias names will be replaced by their
-#         corresponding numbers. After that every asterisk will be replaced by
-#         a "first to last" expression. Then the expression will be splitted
-#         into the komma separated subexpressions.
-
-#         Each subexpression will run through:
-#         1. Check for stepwidth in range (if it has one)
-#         2. Check for validness of range-expression (if it is one)
-#         3. If it is no range: Check for simple numeric
-#         4. If it is numeric: Check if it's in range
-
-#         If one of this checks failed, an exception is raised. Otherwise it will
-#         do nothing. Therefore this function should be used with
-#         a try/except construct.
-#         """
-
-#         timerange = self.timeranges[type]
-
-#         # Replace alias names only if no leading and following alphanumeric and
-#         # no leading slash is present. Otherwise terms like "JanJan" or
-#         # "1Feb" would give a valid check. Values after a slash are stepwidths
-#         # and shouldn't have an alias.
-#         if type == "month": alias = self.monthnames.copy()
-#         elif type == "weekday": alias = self.downames.copy()
-#         else: alias = None
-#         if alias != None:
-#             while True:
-#                 try: key,value = alias.popitem()
-#                 except KeyError: break
-#                 expr = re.sub("(?<!\w|/)" + value + "(?!\w)", key, expr)
-
-#         expr = expr.replace("*", str(min(timerange)) + "-" + str(max(timerange)) )
-
-#         lst = expr.split(",")
-#         rexp_step = re.compile("^(\d+-\d+)/(\d+)$")
-#         rexp_range = re.compile("^(\d+)-(\d+)$")
-
-#         expr_range = []
-#         for field in lst:
-#             # Extra variables for time calculation
-#             step = None
-#             buff = None
-
-#             result = rexp_step.match(field)
-#             if  result != None:
-#                 field = result.groups()[0]
-#                 # We need to take step in count
-#                 step = int(result.groups()[1])
-#                 if step not in timerange:
-#                     raise ValueError("stepwidth",
-#                                      self.timenames[type],
-#                                      "Must be between %(min)s and %(max)s" % { "min": min(timerange),
-#                                                                                "max": max(timerange) } )
-
-#             result = rexp_range.match(field)
-#             if (result != None):
-#                 if (int(result.groups()[0]) not in timerange) or (int(result.groups()[1]) not in timerange):
-#                     raise ValueError("range",
-#                                      self.timenames[type],
-#                                      "Must be between %(min)s and %(max)s" % { "min": min(timerange),
-#                                                                                "max": max(timerange) } )
-#                 # Now we deal with a range...
-#                 if step != None :
-#                     buff = range(int(result.groups()[0]), int(result.groups()[1])+1, step)
-#                 else :
-#                     buff = range(int(result.groups()[0]), int(result.groups()[1])+1)
-
-#             elif not field.isdigit():
-#                 raise ValueError("fixed",
-#                                  self.timenames[type],
-#                                  "%s is not a number" % ( field ) )
-#             elif int(field) not in timerange:
-#                 raise ValueError("fixed",
-#                                  self.timenames[type],
-#                                  "Must be between %(min)s and %(max)s" % { "min": min(timerange),
-#                                                                            "max": max(timerange) } )
-#             if buff != None :
-#                 expr_range.extend(buff)
-#             else :
-#                 expr_range.append(int(field))
-
-#         expr_range.sort()
-#         # Here we may need to check wether some elements have duplicates
-#         self.fields[type] = expr_range
-
-
-
-
-#         self.__setup_timespec()
-#         self.set_value(entry)
-#         self.set_expiration(expiration)
-
-#     def set_expiration(self, val):
-#         self.expiration = datetime.timedelta(minutes=val)
-
-#     def set_value(self, entry = None):
-#         self.data = entry
-#         if not self.data:
-#             self.fields = None
-#             return
-#         fields = re.findall("\S+", self.data)
-#         if len(fields) != 5 :
-#             raise ValueError("Crontab entry needs 5 fields")
-#         self.fields = {
-#             "minute" : fields[0],
-#             "hour"   : fields[1],
-#             "day"    : fields[2],
-#             "month"  : fields[3],
-#             "weekday": fields[4],
-#             }
-#         if not self._is_valid():
-#             raise ValueError("Bad Entry")
-
-#     #### HERE BEGINS THE CODE BORROWED FROM gnome-schedule ###
-#     def __setup_timespec(self):
-
-#         self.timenames = {
-#                 "minute"   : "Minute",
-#                 "hour"     : "Hour",
-#                 "day"      : "Day of Month",
-#                 "month"    : "Month",
-#                 "weekday"  : "Weekday"
-#                 }
-
-
-
-#         self.downames = {
-#                 "0"        : "Sun",
-#                 "1"        : "Mon",
-#                 "2"        : "Tue",
-#                 "3"        : "Wed",
-#                 "4"        : "Thu",
-#                 "5"        : "Fri",
-#                 "6"        : "Sat",
-#                 "7"        : "Sun"
-#                 }
-
-
-
-
-#     #### HERE ENDS THE CODE BORROWED FROM gnome-schedule ###
-
-#     def _is_valid(self):
-#         """Validates the data to check for a well-formated cron
-#         entry.
-#         Returns True or false"""
-
-#         try:
-#             for typ, exp in self.fields.items():
-#                 self.checkfield(exp, typ)
-#         except ValueError,(specific,caused,explanation):
-#             print "PROBLEM TYPE: %s, ON FIELD: %s -> %s " % (specific,caused,explanation)
-#             return False
-#         return True
 
 #     def __next_time(self, time_list, time_now):
 #         """Little helper function to find next element on the list"""
@@ -681,6 +521,8 @@ if __name__ == "__main__" :
 			self.assertEqual( [57,58,59], self.e.fields["minute"])
 		def test_set_value_oddPatterns_04( self ):
 			self.e.set_value("* * * jan-dec/2 *")
+		def test_set_value_oddPatterns_05( self ):
+			self.e.set_value("*/0 */0 */0 */0 */0")
 		def test_set_value_handles_3charMonths_true( self ):
 			self.e.set_value( "* * * jan-mar *" )
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is in Jan" )

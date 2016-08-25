@@ -563,6 +563,35 @@ if __name__ == "__main__" :
 			self.e.set_value('30 8 10 6 *')
 			self.assertRaises( ValueError, self.e.matches, "1970-6-10 8:30" )
 
+		######## Special tests
+		def test_matches_specialEntries_reboot_true( self ):
+			"""Not sure what this may mean for this usage"""
+			pass
+		def test_matches_specialEntries_reboot_false( self ):
+			"""Not sure what this may mean for this usage"""
+			pass
+		def test_matches_specialEntries_yearly( self ):
+			self.e.set_value('@yearly')
+			self.assertEqual( '0 0 1 1 *', self.e.data )
+		def test_matches_specialEntries_annually( self ):
+			self.e.set_value('@annually')
+			self.assertEqual( '0 0 1 1 *', self.e.data )
+		def test_matches_specialEntries_monthly( self ):
+			self.e.set_value('@monthly')
+			self.assertEqual( '0 0 1 * *', self.e.data )
+		def test_matches_specialEntries_weekly( self ):
+			self.e.set_value('@weekly')
+			self.assertEqual( '0 0 * * 0', self.e.data )
+		def test_matches_specialEntries_daily( self ):
+			self.e.set_value('@daily')
+			self.assertEqual( '0 0 * * *', self.e.data )
+		def test_matches_specialEntries_midnight( self ):
+			self.e.set_value('@midnight')
+			self.assertEqual( '0 0 * * *', self.e.data )
+		def test_matches_specialEntries_hourly( self ):
+			self.e.set_value('@hourly')
+			self.assertEqual( '0 * * * *', self.e.data )
+
 
 		####### Tests from the original
 		def test_matches_specificDayTime_seconds( self ):
@@ -623,34 +652,11 @@ if __name__ == "__main__" :
 			self.e.set_value('0-10/2 * * * *')
 			self.assertFalse( self.e.matches( datetime.datetime( 1970, 1, 1, 0, 5 ) ), "minute out side of range" )
 
-		######## Special tests
-		def test_matches_specialEntries_reboot_true( self ):
-			"""Not sure what this may mean for this usage"""
-			pass
-		def test_matches_specialEntries_reboot_false( self ):
-			"""Not sure what this may mean for this usage"""
-			pass
-		def test_matches_specialEntries_yearly( self ):
-			self.e.set_value('@yearly')
-			self.assertEqual( '0 0 1 1 *', self.e.data )
-		def test_matches_specialEntries_annually( self ):
-			self.e.set_value('@annually')
-			self.assertEqual( '0 0 1 1 *', self.e.data )
-		def test_matches_specialEntries_monthly( self ):
-			self.e.set_value('@monthly')
-			self.assertEqual( '0 0 1 * *', self.e.data )
-		def test_matches_specialEntries_weekly( self ):
-			self.e.set_value('@weekly')
-			self.assertEqual( '0 0 * * 0', self.e.data )
-		def test_matches_specialEntries_daily( self ):
-			self.e.set_value('@daily')
-			self.assertEqual( '0 0 * * *', self.e.data )
-		def test_matches_specialEntries_midnight( self ):
-			self.e.set_value('@midnight')
-			self.assertEqual( '0 0 * * *', self.e.data )
-		def test_matches_specialEntries_hourly( self ):
-			self.e.set_value('@hourly')
-			self.assertEqual( '0 * * * *', self.e.data )
+		### next_run tests
+		def test_next_run_timeBeforeMatch_01( self ):
+			self.e.set_value('30 8 10 6 *')
+
+
 
 	"""
 

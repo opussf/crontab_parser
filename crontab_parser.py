@@ -128,11 +128,20 @@ class SimpleCrontabEntry( object ):
 		else: alias = None
 		if alias:
 			for key, value in alias.iteritems():
-				print key, value, expression,
 				expression = re.sub("(?<!\w|/)"+ value +"(?!\w)", key, expression)
-				print expression
 
+		# Replace the wildcard with a range expression
+		expression = expression.replace("*", "%s-%s" % (min(timerange), max(timerange)))
+		print expression
 
+		# create a list of the comma seperated expressions
+		expressionlist = expression.split(",")
+		stepPattern = re.compile("^(\d+-\d+)/(\d+)$")
+		print expressionlist
+
+		expressionRange = []
+		for expr in expressionlist:
+			print expr
 
 
 
@@ -592,6 +601,14 @@ if __name__ == "__main__" :
 			self.assertRaises( ValueError, self.e.set_value, "* * * *" )
 		def test_set_value_throwsException_six( self ):
 			self.assertRaises( ValueError, self.e.set_value, "* * * * * *" )
+		def test_set_value_throwsException_badStep_emptyStepp( self ):
+			self.assertRaises( ValueError, self.e.set_value, "*/ * * * *")
+		def test_set_value_oddPatterns_01( self ):
+			self.e.set_value("*-* * * * *")
+		def test_set_value_oddPatterns_02( self ):
+			self.e.set_value("*,* * * * *")
+		def test_set_value_oddPatterns_03( self ):
+			self.e.set_value("*/* * * * *")
 		def test_set_value_handles_3charMonths_true( self ):
 			self.e.set_value( "* * * jan-mar *" )
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is in Jan" )

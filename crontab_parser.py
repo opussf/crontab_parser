@@ -95,6 +95,16 @@ class SimpleCrontabEntry( object ):
 			"11"       : "nov",
 			"12"       : "dec"
 		}
+		self.downames = {
+			"0"  : "sun",
+			"1"  : "mon",
+			"2"  : "tue",
+			"3"  : "wed",
+			"4"  : "thu",
+			"5"  : "fri",
+			"6"  : "sat",
+			"7"  : "sun",
+		}
 
 	def __is_valid( self ):
 		"""Two fold function. Validate the cron entry by expanding the data.
@@ -113,7 +123,14 @@ class SimpleCrontabEntry( object ):
 		print(timerange)
 
 		# Replace alias names
-		if type == "month": alias = self.monthnames.copy()
+		if fieldName == "month": alias = self.monthnames.copy()
+		elif fieldName == "weekday": alias = self.downames.copy()
+		else: alias = None
+		if alias:
+			for key, value in alias.iteritems():
+				print key, value, expression,
+				expression = re.sub("(?<!\w|/)"+ value +"(?!\w)", key, expression)
+				print expression
 
 
 
@@ -581,12 +598,23 @@ if __name__ == "__main__" :
 		def test_set_value_handles_3charMonths_false( self ):
 			self.e.set_value( "* * * FEB *" )
 			self.assertFalse( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is not in Feb" )
+		def test_set_value_handles_3charMonths_2inARow( self ):
+			self.assertRaises( ValueError, self.e.set_value, "* * * febFEB *" )
+		def test_set_value_handles_3charMonths_badValue( self ):
+			self.assertRaises( ValueError, self.e.set_value, "* * * 1FEB *" )
+		def test_set_value_handles_3charMonths_list( self ):
+			self.e.set_value( "* * * jan,jun *")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is in Jan" )
 		def test_set_value_handles_3charDOW_true( self ):
 			self.e.set_value( "* * * * thu" )
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is Thursday" )
 		def test_set_value_handles_3charDOW_false( self ):
 			self.e.set_value( "* * * * sun" )
 			self.assertFalse( self.e.matches( datetime.datetime( 1970, 1, 1 ) ), "1/1/1970 is not Sunday" )
+		def test_set_value_handles_3charDOW_2inARow( self ):
+			self.assertRaises( ValueError, self.e.set_value, "* * * * sunmon" )
+		def test_set_value_handles_3charDOW_badValue( self ):
+			self.assertRaises( ValueError, self.e.set_value, "* * * * 1sun" )
 
 
 		####### Tests from the original

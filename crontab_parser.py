@@ -101,6 +101,28 @@ class SimpleCrontabEntry( object ):
 				startTime -= oneMinute
 		raise ValueError( "Time goes before epoch" )
 
+	def __iter__(self, startTime=datetime.datetime.now(), endTime=None ):
+		"""Returns an interator that lists all the times that the cronstring matches between startTime and endTime.
+		If a single value is given, it will result in from now till then.
+		"""
+		try:	# use this to control
+			if self.testTime:
+				pass
+		except:
+			if not endTime:
+				endTime = startTime
+				startTime = datetime.datetime.now()
+			self.testTime = startTime
+			self.endTime = endTime
+		return self
+	next_runs = __iter__
+	def next(self):
+		self.testTime = self.next_run( self.testTime )
+		if self.testTime > self.endTime:
+			del self.testTime
+			raise StopIteration
+		return self.testTime
+
 	#####  End of public methods
 
 	def __setup( self ):
@@ -633,5 +655,9 @@ AttributeError: Crontab needs an entry to check against
 
 
 """
+		def test_generator_01( self ):
+			self.e.set_value("0 20 * * 3")
+			for d in self.e.next_runs( datetime.datetime(1970, 1, 1), datetime.datetime(1971, 1, 1) ):
+				print d
 
 	unittest.main()

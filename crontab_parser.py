@@ -78,6 +78,10 @@ class SimpleCrontabEntry( object ):
 				checkTime.minute in self.fields['minute'] and \
 				checkTime.weekday() + 1 in [d or 7 for d in self.fields['weekday']]
 
+	def next_run( self, startTime = datetime.datetime.now() ):
+		pass
+
+	#####  End of public methods
 
 	def __setup( self ):
 		self.fieldnames = {
@@ -369,17 +373,6 @@ class SimpleCrontabEntry( object ):
 #         return True
 
 
-#     def matches(self, time = datetime.datetime.now()):
-#         """Checks if given time matches cron pattern."""
-#         if not self.fields:
-#              raise AttributeError("Crontab needs an entry to check against")
-#         return time.month in self.fields['month'] and \
-#             time.day in self.fields['day'] and \
-#             time.hour in self.fields['hour'] and \
-#             time.minute in self.fields['minute'] and \
-#             time.weekday() + 1 in [d or 7 for d in self.fields['weekday']] # Sunday may be represented as ``0`` or ``7``.
-
-
 #     def next_run(self, time = datetime.datetime.now()):
 #         """Calculates when will the next execution be."""
 #         #print("next_run(%s)" % (time,))
@@ -487,7 +480,7 @@ if __name__ == "__main__" :
 		def tearDown( self ):
 			self.e = None
 		def datetimeToSeconds( self, datetimeIn ):
-			return( (datetimeIn - datetime.datetime(1970,1,1)).total_seconds() )
+			return( (datetimeIn - datetime.datetime(1970,1,1,0,0)).total_seconds() )
 		def test_instanceInitWithEntry( self ):
 			self.e = None
 			self.e = SimpleCrontabEntry("* * * * *")
@@ -655,6 +648,32 @@ if __name__ == "__main__" :
 		### next_run tests
 		def test_next_run_timeBeforeMatch_01( self ):
 			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 1, 1) ) )
+		def test_next_run_timeBeforeMatch_02( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 4, 1) ) )
+		def test_next_run_timeBeforeMatch_03( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 1) ) )
+		def test_next_run_timeBeforeMatch_04( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 6) ) )
+		def test_next_run_timeBeforeMatch_05( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10) ) )
+		def test_next_run_timeBeforeMatch_06( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 4) ) )
+		def test_next_run_timeBeforeMatch_07( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8) ) )
+		def test_next_run_timeBeforeMatch_08( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8, 15) ) )
+		def test_next_run_timeBeforeMatch_09( self ):
+			self.e.set_value('30 8 10 6 *')
+			self.assertEqual( datetime.datetime( 1971, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8, 30) ) )
+
 
 
 
@@ -663,32 +682,6 @@ if __name__ == "__main__" :
 
 ``next_run`` method testing:
 
-
-
->>> e = SimpleCrontabEntry('30 8 10 6 *')
-
->>> e.next_run(datetime(1970, 1, 1))
-datetime.datetime(1970, 6, 10, 8, 30)
->>> e.next_run(datetime(1970, 4, 1))
-datetime.datetime(1970, 6, 10, 8, 30)
-
->>> e.next_run(datetime(1970, 6, 1))
-datetime.datetime(1970, 6, 10, 8, 30)
->>> e.next_run(datetime(1970, 6, 6))
-datetime.datetime(1970, 6, 10, 8, 30)
-
->>> e.next_run(datetime(1970, 6, 10))
-datetime.datetime(1970, 6, 10, 8, 30)
->>> e.next_run(datetime(1970, 6, 10, 4))
-datetime.datetime(1970, 6, 10, 8, 30)
-
->>> e.next_run(datetime(1970, 6, 10, 8))
-datetime.datetime(1970, 6, 10, 8, 30)
->>> e.next_run(datetime(1970, 6, 10, 8, 15))
-datetime.datetime(1970, 6, 10, 8, 30)
-
->>> e.next_run(datetime(1970, 6, 10, 8, 30))
-datetime.datetime(1971, 6, 10, 8, 30)
 
 >>> e = SimpleCrontabEntry('0 11,16 * * *')
 

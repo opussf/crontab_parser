@@ -79,7 +79,18 @@ class SimpleCrontabEntry( object ):
 				checkTime.weekday() + 1 in [d or 7 for d in self.fields['weekday']]
 
 	def next_run( self, startTime = datetime.datetime.now() ):
-		pass
+		"""Calculates when the next excution will be."""
+		print(startTime)
+		print((startTime - datetime.datetime( 1970, 1, 1 )).total_seconds() )
+
+		# start by adding a minute (we don't want to return startTime)
+		oneMinute = datetime.timedelta( minutes=1 )
+		startTime += oneMinute
+		while True:
+			if self.matches( startTime ):
+				return startTime
+			else:
+				startTime += oneMinute
 
 	#####  End of public methods
 
@@ -646,35 +657,36 @@ if __name__ == "__main__" :
 			self.assertFalse( self.e.matches( datetime.datetime( 1970, 1, 1, 0, 5 ) ), "minute out side of range" )
 
 		### next_run tests
-		def test_next_run_timeBeforeMatch_01( self ):
+		def test_next_run_01( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 1, 1) ) )
-		def test_next_run_timeBeforeMatch_02( self ):
+		def test_next_run_02( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 4, 1) ) )
-		def test_next_run_timeBeforeMatch_03( self ):
+		def test_next_run_03( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 1) ) )
-		def test_next_run_timeBeforeMatch_04( self ):
+		def test_next_run_04( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 6) ) )
-		def test_next_run_timeBeforeMatch_05( self ):
+		def test_next_run_05( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10) ) )
-		def test_next_run_timeBeforeMatch_06( self ):
+		def test_next_run_06( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 4) ) )
-		def test_next_run_timeBeforeMatch_07( self ):
+		def test_next_run_07( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8) ) )
-		def test_next_run_timeBeforeMatch_08( self ):
+		def test_next_run_08( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8, 15) ) )
-		def test_next_run_timeBeforeMatch_09( self ):
+		def test_next_run_09( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertEqual( datetime.datetime( 1971, 6, 10, 8, 30 ), self.e.next_run( datetime.datetime(1970, 6, 10, 8, 30) ) )
-
-
+		def test_next_run_10( self ):
+			self.e.set_value('0 11,16 * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 11, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1 ) ) )
 
 
 	"""

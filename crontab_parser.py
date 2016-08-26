@@ -252,8 +252,6 @@ if __name__ == "__main__" :
 			self.e = SimpleCrontabEntry()
 		def tearDown( self ):
 			self.e = None
-		def datetimeToSeconds( self, datetimeIn ):
-			return( (datetimeIn - datetime.datetime(1970,1,1,0,0)).total_seconds() )
 		def test_instanceInitWithEntry( self ):
 			self.e = None
 			self.e = SimpleCrontabEntry("* * * * *")
@@ -362,16 +360,16 @@ if __name__ == "__main__" :
 		####### Tests from the original
 		def test_matches_specificDayTime_seconds( self ):
 			self.e.set_value('30 8 10 6 *')
-			self.assertTrue( self.e.matches( self.datetimeToSeconds( datetime.datetime(1970, 6, 10, 8, 30) ) ), "This should match." )
+			self.assertTrue( self.e.matches( 13879800 ), "This should match." )
 		def test_matches_specificDayTime_seconds_int( self ):
 			self.e.set_value('30 8 10 6 *')
-			self.assertTrue( self.e.matches( 13854600 ) )
+			self.assertTrue( self.e.matches( 13879800 ) )
 		def test_matches_specificDayTime_datetime( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 6, 10, 8, 30 ) ), "This should match." )
 		def test_matches_specificDayTime_seconds_false( self ):
 			self.e.set_value('30 8 10 6 *')
-			self.assertFalse( self.e.matches( self.datetimeToSeconds( datetime.datetime(1970, 6, 10, 8, 31) ) ) )
+			self.assertFalse( self.e.matches( 13879700 ) )
 		def test_matches_specificDayTime_datetime_false( self ):
 			self.e.set_value('30 8 10 6 *')
 			self.assertFalse( self.e.matches( datetime.datetime( 1970, 6, 10, 8, 31 ) ), "This should match." )

@@ -70,7 +70,7 @@ class SimpleCrontabEntry( object ):
 
 		if isinstance( checkTime, (int, float) ):
 			checkTime = datetime.datetime.fromtimestamp( checkTime )
-			print(checkTime)
+			#print(checkTime)
 
 		return checkTime.month in self.fields['month'] and \
 				checkTime.day in self.fields['day'] and \
@@ -80,10 +80,7 @@ class SimpleCrontabEntry( object ):
 
 	def next_run( self, startTime = datetime.datetime.now() ):
 		"""Calculates when the next excution will be."""
-		print(startTime)
-		print((startTime - datetime.datetime( 1970, 1, 1 )).total_seconds() )
-
-		# start by adding a minute (we don't want to return startTime)
+		# start by adding a minute (don't want to return startTime)
 		oneMinute = datetime.timedelta( minutes=1 )
 		startTime += oneMinute
 		while True:
@@ -91,6 +88,18 @@ class SimpleCrontabEntry( object ):
 				return startTime
 			else:
 				startTime += oneMinute
+
+	def prev_run( self, startTime = datetime.datetime.now() ):
+		"""Calculates when the previous execution was."""
+		# start by subtracting a minute (don't want to return startTime)
+		oneMinute = datetime.timedelta( minutes=1 )
+		startTime -= oneMinute
+		while startTime > datetime.datetime(1970, 1, 1):
+			if self.matches( startTime ):
+				return startTime
+			else:
+				startTime -= oneMinute
+		raise ValueError( "Time goes before epoch" )
 
 	#####  End of public methods
 
@@ -233,253 +242,6 @@ class SimpleCrontabEntry( object ):
 
 
 ###############
-
-#     def __next_time(self, time_list, time_now):
-#         """Little helper function to find next element on the list"""
-#         tmp = [x for x in time_list if x >= time_now]
-#         carry = False
-#         if len(tmp) == 0:
-#             carry = True
-#             sol = time_list[0]
-#         else:
-#             sol = tmp[0]
-#         return sol, carry
-
-#     def __prev_time(self, time_list, item):
-#         """Little helper function to find previous element on the list"""
-#         pos = time_list.index(item)
-#         elem = time_list[pos-1]
-#         carry = elem >= time_list[pos]
-#         return elem, carry
-
-#     def __next_month(self, month, sol):
-#         """Find next month of execution given the month arg. If month
-#         is different than current calls all the other __next_*
-#         functions to set up the time."""
-
-#         #print("__next_month(%s, %s)" % (month, sol))
-#         #print("self.fields[month] = %s" % (self.fields['month'],))
-
-#         sol['month'], carry = self.__next_time(self.fields['month'], month)
-#         if carry :
-#             sol['year'] += 1
-#         if sol['month'] != month :
-#             self.__next_day(1,sol)
-#             self.__next_hour(0,sol)
-#             self.__next_minute(0,sol)
-#             return False
-#         return True
-
-#     def __next_minute(self, minute, sol):
-#         """Find next minute of execution given the minute arg."""
-#         sol['minute'], carry = self.__next_time(self.fields['minute'], minute)
-#         if carry:
-#             self.__next_hour(sol['hour']+1, sol)
-#         return True
-
-#     def __next_hour(self, hour, sol):
-#         """Find next hour of execution given the hour arg. If hour is
-#         different than current calls the __next_hour function to set
-#         up the minute """
-
-#         sol['hour'], carry = self.__next_time(self.fields['hour'], hour)
-#         if carry:
-#             self.__next_day(sol['day']+1, sol)
-#         if sol['hour'] != hour:
-#             self.__next_minute(0,sol)
-#             return False
-#         return True
-
-#     #el weekday se calcula a partir del dia, el mes y ao dentro de sol
-#     def __next_day(self, day, sol):
-#         """Find next day of execution given the day and the month/year
-#         information held on the sol arg. If day is different than
-#         current calls __next_hour and __next_minute functions to set
-#         them to the correct values"""
-#         #print("__next_day( %s, %s )" % (day, sol))
-
-#         try:
-#             now = datetime.date(sol['year'], sol['month'], day)
-#         except:
-#             try:
-#                 now = datetime.date(sol['year'], sol['month']+1, 1)
-#                 #print("Good 2nd try")
-#             except:
-#                 now = datetime.date(sol['year']+1, 1, 1)
-#         # The way is handled on the system is monday = 0, but for crontab sunday =0
-#         weekday = now.weekday()+1
-#         # first calculate day
-#         day_tmp, day_carry = self.__next_time(self.fields['day'], day)
-#         #print("day_tmp: %s, day_carry: %s" % (day_tmp, day_carry))
-#         day_diff = datetime.date(sol['year'], sol['month'], day_tmp) - now
-
-#         # if we have all days but we don't have all weekdays we need to
-#         # perform different
-#         if len(self.fields['day']) == 31 and len(self.fields['weekday']) != 8:
-#             weekday_tmp, weekday_carry = self.__next_time(self.fields['weekday'], weekday)
-#             # Both 0 and 7 represent sunday
-#             weekday_tmp -= 1
-#             if weekday_tmp < 0 : weekday_tmp = 6
-#             weekday_diff = datetime.timedelta(days=weekday_tmp - (weekday - 1))
-#             if weekday_carry :
-#                 weekday_diff += datetime.timedelta(weeks=1)
-#             weekday_next_month = (now + weekday_diff).month != now.month
-#             #print("Weekday_next_month: %s" % (weekday_next_month,))
-#             # If next weekday is not on the next month
-#             if not weekday_next_month :
-#                 sol['day'] = (now + weekday_diff).day
-#                 if sol['day'] != day :
-#                     self.__next_hour(0,sol)
-#                     self.__next_minute(0, sol)
-#                     return False
-#                 return True
-#             else :
-#                 flag = self.__next_month(sol['month']+1, sol)
-#                 if flag :
-#                     return self.__next_day(0, sol)
-#                 return False
-
-#         # if we don't have all the weekdays means that we need to use
-#         # them to calculate next day
-#         #print("weekday: %s" % (self.fields['weekday'],))
-#         if len(self.fields['weekday']) != 8:
-#             weekday_tmp, weekday_carry = self.__next_time(self.fields['weekday'], weekday)
-#             # Both 0 and 7 represent sunday
-#             weekday_tmp -= 1
-#             if weekday_tmp < 0 : weekday_tmp = 6
-#             weekday_diff = datetime.timedelta(days=weekday_tmp - (weekday - 1))
-#             if weekday_carry :
-#                 weekday_diff += datetime.timedelta(weeks=1)
-#             weekday_next_month = (now + weekday_diff).month != now.month
-#             # If next weekday is not on the next month
-#             if not weekday_next_month :
-#                 #  If the next day is on other month, the next weekday
-#                 #  is closer to happen so is what we choose
-#                 if day_carry:
-#                     sol['day'] = (now + weekday_diff).day
-#                     if sol['day'] != day :
-#                         self.__next_hour(0,sol)
-#                         self.__next_minute(0, sol)
-#                         return False
-#                     return True
-#                 else :
-#                     # Both day and weekday are good candidates, let's
-#                     # find out who is going to happen
-#                     # sooner
-#                     diff = min(day_diff, weekday_diff)
-#                     sol['day'] = (now+diff).day
-#                     if sol['day'] != day :
-#                         self.__next_hour(0,sol)
-#                         self.__next_minute(0, sol)
-#                         return False
-#                     return True
-
-#         sol['day'] = day_tmp
-#         if day_carry :
-#             self.__next_month(sol['month']+1, sol)
-#         if sol['day'] != day :
-#             self.__next_hour(0,sol)
-#             self.__next_minute(0, sol)
-#             return False
-#         return True
-
-
-#     def next_run(self, time = datetime.datetime.now()):
-#         """Calculates when will the next execution be."""
-#         #print("next_run(%s)" % (time,))
-#         if self.matches(time):
-#             time += datetime.timedelta(minutes = 1)
-#         sol = {'minute': time.minute, 'hour': time.hour, 'day': time.day, 'month' : time.month, 'year' : time.year}
-#         # next_month if calculated first as next_day depends on
-#         # it. Also if next_month is different than time.month the
-#         # function will set up the rest of the fields
-#         try:
-#             self.__next_month(time.month, sol) and \
-#                                           self.__next_day(time.day, sol) and \
-#                                           self.__next_hour(time.hour, sol) and \
-#                                           self.__next_minute(time.minute, sol)
-#             #print("returning: ")
-#             return datetime.datetime(sol['year'], sol['month'], sol['day'], sol['hour'], sol['minute'])
-#         except:
-#             try:
-#                 return self.next_run(datetime.datetime(time.year, time.month+1, 1, 0, 0))
-#             except:
-#                 return self.next_run(datetime.datetime(time.year+1, 1, 1, 0, 0))
-
-#     def __prev_date(self, base, prev_day, carry_day):
-#         if carry_day:
-#             prev_month=base.month
-#             prev_year=base.year
-#             i = 0
-#             for i in xrange(7):
-#                 prev_month, carry_month = self.__prev_time(self.fields['month'], prev_month)
-#                 if carry_month:
-#                     prev_year -= 1
-#                 try:
-#                     date = datetime.datetime(prev_year, prev_month, prev_day, base.hour, base.minute)
-#                 except ValueError:
-#                     pass
-#                 else:
-#                     if date.weekday() in self.fields['weekday']:
-#                         base = date
-#                         break
-#             else:
-#                 raise ValueError('Can\'t find previous run time for date %s' % base)
-#         else:
-#             base = datetime.datetime(base.year, base.month, prev_day, base.hour, base.minute)
-#         return base
-
-#     def prev_run(self, time = datetime.datetime.now()):
-#         """Calculates when the previous execution was."""
-#         base = self.matches(time) and time or self.next_run(time)
-#         # minute
-#         prev_minute, carry = self.__prev_time(self.fields['minute'], base.minute)
-#         min_diff = datetime.timedelta(minutes=(base.minute - prev_minute))
-#         base -= min_diff
-#         if not carry :
-#             return base
-
-#         # hour
-#         prev_hour, carry = self.__prev_time(self.fields['hour'], base.hour)
-#         hour_diff = datetime.timedelta(hours=(base.hour - prev_hour))
-#         base -= hour_diff
-#         if not carry :
-#             return base
-
-#         # day and weekday are strongly depend on month and year
-
-#         prev_run = None
-#         completed = False
-#         prev_day, carry_day = self.__prev_time(self.fields['day'], base.day)
-#         _carry_day = False
-#         while 28 < prev_day and not _carry_day:
-#             date = self.__prev_date(base, prev_day, carry_day)
-#             if not prev_run or prev_run < date:
-#                 prev_run = date
-#             _prev_day = prev_day
-#             prev_day, _carry_day = self.__prev_time(self.fields['day'], prev_day)
-#             carry_day = carry_day or _carry_day
-#         date = self.__prev_date(base, prev_day, carry_day)
-#         if not prev_run or prev_run < date:
-#             prev_run = date
-
-#         return prev_run
-
-#     def is_expired(self, time = datetime.datetime.now()):
-#         """If the expiration parameter has been set this will check
-#         wether too much time has been since the cron-entry. If the
-#         expiration has not been set, it throws ValueError."""
-#         if self.expiration == 0 :
-#             raise ValueError("Missing argument",
-#                              "Expiration time has not been set")
-#         next_beg = self.next_run(time)
-#         next_end = next_beg + self.expiration
-#         prev_beg = self.prev_run(time)
-#         prev_end = prev_beg + self.expiration
-#         if (time >= next_beg and time <= next_end) or (time >= prev_beg and time <= prev_end) :
-#             return False
-#         return True
-
 
 
 if __name__ == "__main__" :
@@ -687,20 +449,26 @@ if __name__ == "__main__" :
 		def test_next_run_10( self ):
 			self.e.set_value('0 11,16 * * *')
 			self.assertEqual( datetime.datetime( 1970, 1, 1, 11, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1 ) ) )
+		def test_next_run_11( self ):
+			self.e.set_value('0 11,16 * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 16, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
 
+		def test_next_run_special_01( self ):
+			self.e.set_value('0 20 * * 3') # 8pm on Wednesday
+			self.assertEqual( datetime.datetime( 2016, 8, 31, 20, 0 ), self.e.next_run( datetime.datetime( 2016, 8, 24, 20, 0 ) ) )
+		def test_next_run_special_02( self ):
+			self.e.set_value('0 20 * * 3') # 8pm on Wednesday
+			self.assertEqual( datetime.datetime( 2016, 9, 7, 20, 0 ), self.e.next_run( datetime.datetime( 2016, 8, 31, 20, 00 ) ) )
+		def test_next_run_special_03( self ):
+			self.e.set_value('0 20 * * 3') # 8pm on Wednesday
+			self.assertEqual( datetime.datetime( 2016, 12, 7, 20, 0 ), self.e.next_run( datetime.datetime( 2016, 11, 30, 20, 00 ) ) )
 
-	"""
+		"""
+
 
 
 ``next_run`` method testing:
 
-
->>> e = SimpleCrontabEntry('0 11,16 * * *')
-
->>> e.next_run(datetime(1970, 1, 1))
-datetime.datetime(1970, 1, 1, 11, 0)
->>> e.next_run(datetime(1970, 1, 1, 14, 30))
-datetime.datetime(1970, 1, 1, 16, 0)
 
 >>> e = SimpleCrontabEntry('0 9-18 * * *')
 
@@ -732,7 +500,14 @@ datetime.datetime(1970, 1, 1, 14, 6)
 
 
 
-``prev_run`` method testing:
+	``prev_run`` method testing:
+		"""
+		def test_prev_run_01( self ):
+			self.e.set_value("30 8 10 6 *")
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.prev_run( datetime.datetime( 1971, 1, 1) ) )
+
+
+		"""
 
 
 
@@ -858,17 +633,6 @@ AttributeError: Crontab needs an entry to check against
 
 ```Weekly when match day is last day of a 31 day month```
 
->>> e = None
->>> e = SimpleCrontabEntry('0 20 * * 3')	# 8pm on Wednesday
-
->>> e.next_run(datetime(2016, 8, 24, 20, 00)) # 24 Aug 2016, 20:01, next Wed should be 31 Aug
-datetime.datetime(2016, 8, 31, 20, 0)
-
->>> e.next_run(datetime(2016, 8, 31, 20, 01)) # 31 Aug 2016, next Wednesday should be the 7 Sep
-datetime.datetime(2016, 9, 7, 20, 0)
-
->>> e.next_run(datetime(2016, 11, 30, 20, 01)) # 30 Nov 2016, next Wednesday should be 7 Dec
-datetime.datetime(2016, 12, 7, 20, 0)
 
 """
 

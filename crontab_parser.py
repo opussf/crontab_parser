@@ -507,66 +507,60 @@ if __name__ == "__main__" :
 			self.e.set_value('0 20 * * 3') # 8pm on Wednesday
 			self.assertEqual( datetime.datetime( 2016, 12, 7, 20, 0 ), self.e.next_run( datetime.datetime( 2016, 11, 30, 20, 00 ) ) )
 
-		"""
-
-	``prev_run`` method testing:
-		"""
 		def test_prev_run_01( self ):
 			self.e.set_value("30 8 10 6 *")
 			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.prev_run( datetime.datetime( 1971, 1, 1) ) )
+		def test_prev_run_02( self ):
+			self.e.set_value("30 8 10 6 *")
+			self.assertEqual( datetime.datetime( 1970, 6, 10, 8, 30 ), self.e.prev_run( datetime.datetime( 1971, 6, 10, 8, 30 ) ) )
+		def test_prev_run_03( self ):
+			self.e.set_value("* 5 * * *")
+			self.assertEqual( datetime.datetime( 1970, 3, 31, 5, 59 ), self.e.prev_run( datetime.datetime( 1970, 4, 1 ) ) )
+		def test_prev_run_04( self ):
+			self.e.set_value("0 11,16 * * *")
+			self.assertEqual( datetime.datetime( 1970, 12, 31, 16, 0 ), self.e.prev_run( datetime.datetime( 1971, 1, 1 ) ) )
+		def test_prev_run_05( self ):
+			self.e.set_value("0 11,16 * * *")
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 11, 0 ), self.e.prev_run( datetime.datetime( 1970, 1, 1, 13, 30 ) ) )
+		def test_prev_run_06( self ):
+			self.e.set_value("0 9-18 * * *")
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 18, 0 ), self.e.prev_run( datetime.datetime( 1970, 1, 1, 19 ) ) )
+		def test_prev_run_07( self ):
+			self.e.set_value("0 9-18 * * *")
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 14, 0 ), self.e.prev_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+		def test_prev_run_08( self ):
+			self.e.set_value("* * * * *")
+			self.assertEqual( datetime.datetime( 1970, 12, 31, 23, 59 ), self.e.prev_run( datetime.datetime( 1971, 1, 1 ) ) )
+		def test_prev_run_09( self ):
+			self.e.set_value("* * * * *")
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 14, 29 ), self.e.prev_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+		def test_prev_run_10( self ):
+			self.e.set_value("0-10/2 * * * *")
+			self.assertEqual( datetime.datetime( 1970, 12, 31, 23, 10 ), self.e.prev_run( datetime.datetime( 1971, 1, 1 ) ) )
+		def test_prev_run_11( self ):
+			self.e.set_value("0-10/2 * * * *")
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 14, 6 ), self.e.prev_run( datetime.datetime( 1970, 1, 1, 14, 8 ) ) )
+		def test_prev_run_12( self ):
+			self.e.set_value("* 5 * * *")
+			self.assertEqual( datetime.datetime( 1970, 4, 30, 5, 59 ), self.e.prev_run( datetime.datetime( 1970, 5, 1 ) ) )
+		def test_prev_run_13( self ):
+			self.e.set_value("2,3,5,7 10 29 2 *")
+			self.assertEqual( datetime.datetime( 1972, 2, 29, 10, 7 ), self.e.prev_run( datetime.datetime( 1973, 1, 1 ) ) )
+		def test_noCron_throwsException_matches( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry()
+			self.assertRaises( AttributeError, self.e.matches )
+		def test_noCron_throwsException_next_run( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry()
+			self.assertRaises( AttributeError, self.e.next_run )
+		def test_noCron_throwsException_prev_run( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry()
+			self.assertRaises( AttributeError, self.e.prev_run )
 
 
 		"""
-
->>> e = SimpleCrontabEntry('30 8 10 6 *')
-
->>> e.prev_run(datetime(1970, 6, 10, 8, 30))
-datetime.datetime(1969, 6, 10, 8, 30)
-
->>> e = SimpleCrontabEntry('* 5 * * *')
-
->>> e.prev_run(datetime(1970, 4, 1))
-datetime.datetime(1970, 3, 31, 5, 59)
-
->>> e = SimpleCrontabEntry('0 11,16 * * *')
-
->>> e.prev_run(datetime(1970, 1, 1))
-datetime.datetime(1969, 12, 31, 16, 0)
->>> e.prev_run(datetime(1970, 1, 1, 13, 30))
-datetime.datetime(1970, 1, 1, 11, 0)
-
->>> e = SimpleCrontabEntry('0 9-18 * * *')
-
->>> e.prev_run(datetime(1970, 1, 1, 19))
-datetime.datetime(1970, 1, 1, 18, 0)
->>> e.prev_run(datetime(1970, 1, 1, 14, 30))
-datetime.datetime(1970, 1, 1, 14, 0)
-
->>> e = SimpleCrontabEntry('* * * * *')
-
->>> e.prev_run(datetime(1970, 1, 1))
-datetime.datetime(1969, 12, 31, 23, 59)
->>> e.prev_run(datetime(1970, 1, 1, 14, 30))
-datetime.datetime(1970, 1, 1, 14, 29)
-
->>> e = SimpleCrontabEntry('0-10/2 * * * *')
-
->>> e.prev_run(datetime(1970, 1, 1))
-datetime.datetime(1969, 12, 31, 23, 10)
->>> e.prev_run(datetime(1970, 1, 1, 14, 8))
-datetime.datetime(1970, 1, 1, 14, 6)
-
->>> e = SimpleCrontabEntry('* 5 * * *')
-
->>> e.prev_run(datetime(1970, 5, 1))
-datetime.datetime(1970, 4, 30, 5, 59)
-
->>> e = SimpleCrontabEntry('2,3,5,7 10 29 2 *')
-
->>> e.prev_run(datetime(1970, 1, 1)) # 1968 is the nearest leap-year.
-datetime.datetime(1968, 2, 29, 10, 7)
-
-
 
 ``empty`` instantiation throws exceptions on use
 
@@ -640,7 +634,7 @@ AttributeError: Crontab needs an entry to check against
 
 
 """
-		def test_generator_01( self ):
+		def notest_generator_01( self ):
 			self.e.set_value("0 20 * * sun")
 			for d in self.e.next_runs( datetime.datetime(2016, 1, 1), datetime.datetime(2017, 1, 1) ):
 				print d

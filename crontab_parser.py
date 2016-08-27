@@ -472,6 +472,30 @@ if __name__ == "__main__" :
 		def test_next_run_11( self ):
 			self.e.set_value('0 11,16 * * *')
 			self.assertEqual( datetime.datetime( 1970, 1, 1, 16, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+		def test_next_run_12( self ):
+			self.e.set_value('0 9-18 * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 2, 9, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 19 ) ) )
+		def test_next_run_13( self ):
+			self.e.set_value('0 9-18 * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 15, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+		def test_next_run_14( self ):
+			self.e.set_value('0 9-18 * * 1-5')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 12, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 11 ) ) )
+		def test_next_run_15( self ):
+			self.e.set_value('0 9-18 * * 1-5')
+			self.assertEqual( datetime.datetime( 1970, 1, 5, 9, 0 ), self.e.next_run( datetime.datetime( 1970, 1, 3, 14, 30 ) ) )
+		def test_next_run_16( self ):
+			self.e.set_value('* * * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 0, 1 ), self.e.next_run( datetime.datetime( 1970, 1, 1 ) ) )
+		def test_next_run_17( self ):
+			self.e.set_value('* * * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 14, 31 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 14, 30 ) ) )
+		def test_next_run_18( self ):
+			self.e.set_value('0-10/2 * * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 0, 2 ), self.e.next_run( datetime.datetime( 1970, 1, 1 ) ) )
+		def test_next_run_19( self ):
+			self.e.set_value('0-10/2 * * * *')
+			self.assertEqual( datetime.datetime( 1970, 1, 1, 14, 6 ), self.e.next_run( datetime.datetime( 1970, 1, 1, 14, 5 ) ) )
 
 		def test_next_run_special_01( self ):
 			self.e.set_value('0 20 * * 3') # 8pm on Wednesday
@@ -485,41 +509,6 @@ if __name__ == "__main__" :
 
 		"""
 
-
-
-``next_run`` method testing:
-
-
->>> e = SimpleCrontabEntry('0 9-18 * * *')
-
->>> e.next_run(datetime(1970, 1, 1, 19))
-datetime.datetime(1970, 1, 2, 9, 0)
->>> e.next_run(datetime(1970, 1, 1, 14, 30))
-datetime.datetime(1970, 1, 1, 15, 0)
-
->>> e = SimpleCrontabEntry('0 9-18 * * 1-5')
-
->>> e.next_run(datetime(1970, 1, 1, 11)) # 1/1/1970 is Thursday.
-datetime.datetime(1970, 1, 1, 12, 0)
->>> e.next_run(datetime(1970, 1, 3, 14, 30)) # 1/3/1970 is Saturday.
-datetime.datetime(1970, 1, 5, 9, 0)
-
->>> e = SimpleCrontabEntry('* * * * *')
-
->>> e.next_run(datetime(1970, 1, 1))
-datetime.datetime(1970, 1, 1, 0, 1)
->>> e.next_run(datetime(1970, 1, 1, 14, 30))
-datetime.datetime(1970, 1, 1, 14, 31)
-
->>> e = SimpleCrontabEntry('0-10/2 * * * *')
-
->>> e.next_run(datetime(1970, 1, 1))
-datetime.datetime(1970, 1, 1, 0, 2)
->>> e.next_run(datetime(1970, 1, 1, 14, 5))
-datetime.datetime(1970, 1, 1, 14, 6)
-
-
-
 	``prev_run`` method testing:
 		"""
 		def test_prev_run_01( self ):
@@ -529,12 +518,8 @@ datetime.datetime(1970, 1, 1, 14, 6)
 
 		"""
 
-
-
 >>> e = SimpleCrontabEntry('30 8 10 6 *')
 
->>> e.prev_run(datetime(1970, 1, 1))
-datetime.datetime(1969, 6, 10, 8, 30)
 >>> e.prev_run(datetime(1970, 6, 10, 8, 30))
 datetime.datetime(1969, 6, 10, 8, 30)
 
@@ -656,8 +641,8 @@ AttributeError: Crontab needs an entry to check against
 
 """
 		def test_generator_01( self ):
-			self.e.set_value("0 20 * * 3")
-			for d in self.e.next_runs( datetime.datetime(1970, 1, 1), datetime.datetime(1971, 1, 1) ):
+			self.e.set_value("0 20 * * sun")
+			for d in self.e.next_runs( datetime.datetime(2016, 1, 1), datetime.datetime(2017, 1, 1) ):
 				print d
 
 	unittest.main()

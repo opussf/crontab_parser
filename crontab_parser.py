@@ -62,7 +62,6 @@ class SimpleCrontabEntry( object ):
 	def matches( self, checkTime = datetime.datetime.now() ):
 		"""Checks if given time matches cron pattern.
 		This takes a datetime object or epoch seconds"""
-		#print("matches( %s ).  type: %s" % (checkTime,type(checkTime)))
 		if not self.fields:
 			raise AttributeError("Crontab needs an entry to check against")
 		if not isinstance( checkTime, (int, float, datetime.datetime) ):
@@ -70,7 +69,14 @@ class SimpleCrontabEntry( object ):
 
 		if isinstance( checkTime, (int, float) ):
 			checkTime = datetime.datetime.fromtimestamp( checkTime )
-			#print(checkTime)
+
+		# if both the day and weekday are specific (not the * wildcard), they are additive in the match (or)
+		if (self.weekdayIsSpecific and self.dayIsSpecific):
+			return checkTime.month in self.fields['month'] and \
+					checkTime.hour in self.fields['hour'] and \
+					checkTime.minute in self.fields['minute'] and \
+					(checkTime.day in self.fields['day'] or \
+						checkTime.weekday() + 1 in [d or 7 for d in self.fields['weekday']])
 
 		return checkTime.month in self.fields['month'] and \
 				checkTime.day in self.fields['day'] and \
@@ -126,6 +132,8 @@ class SimpleCrontabEntry( object ):
 	#####  End of public methods
 
 	def __setup( self ):
+		self.weekdayIsSpecific = True
+		self.dayIsSpecific = True
 		self.fieldnames = {
 			"minute"  : "Minute",
 			"hour"    : "Hour",
@@ -202,6 +210,10 @@ class SimpleCrontabEntry( object ):
 			for key, value in alias.iteritems():
 				expression = re.sub("(?<!\w|/)"+ value +"(?!\w)", key, expression)
 
+		# if both the day and weekday are specific (not the * wildcard), they are additive in the match (or)
+		if re.match("\*", expression):
+			if fieldName == "weekday": self.weekdayIsSpecific = False
+			elif fieldName == "day": self.dayIsSpecific = False
 		# Replace the wildcard with a range expression
 		expression = expression.replace("*", "%s-%s" % (min(timerange), max(timerange)))
 
@@ -585,6 +597,34 @@ if __name__ == "__main__" :
 			self.e.set_value("0 0 29 * *")
 			datelist = [d for d in self.e.next_runs( datetime.datetime( 2016, 1, 1 ), datetime.datetime(2017, 1, 1 ))]
 			self.assertEqual( 12, len(datelist) )
+		def test_generator_big( self ):
+			self.e.set_value("* * * * *")
+			datelist = [d for d in self.e.next_runs( datetime.datetime( 2016, 1, 1 ), datetime.datetime(2017, 1, 1 ))]
+			self.assertEqual( 527040, len(datelist) )
+		def test_domdow_areAdditive_matches_first( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1, 0, 0 )), "Should match the 1st of the month." )
+		def test_domdow_areAdditive_matches_sun_01( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 3, 0, 0 )), "Should match a Saturday." )
+		def test_domdow_areAdditive_matches_sun_02( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 10, 0, 0 )), "Should match a Saturday." )
+		def test_domdow_areAdditive_matches_sun_03( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 15, 0, 0 )), "Should match the 15th of the month." )
+		def test_domdow_areAdditive_matches_sun_04( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 17, 0, 0 )), "Should match a Saturday." )
+		def test_domdow_areAdditive_matches_sun_05( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 24, 0, 0 )), "Should match a Saturday." )
+		def test_domdow_areAdditive_matches_sun_06( self ):
+			self.e.set_value("0 0 1,15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 31, 0, 0 )), "Should match a Saturday." )
+
+
+
 
 
 	unittest.main()

@@ -573,37 +573,18 @@ if __name__ == "__main__" :
 			self.e = SimpleCrontabEntry("* * * * *")
 			self.e.set_value()
 			self.assertRaises( AttributeError, self.e.prev_run )
-
-		"""
-
-``set_value(None)`` clears the entry
-
->>> e = None
->>> e = SimpleCrontabEntry('* * * * *')
->>> e.set_value()
-
->>> e.matches()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
->>> e.next_run()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
->>> e.prev_run()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
-```Weekly when match day is last day of a 31 day month```
-
-
-"""
-		def notest_generator_01( self ):
+		def test_generator_listcomprehension( self ):
 			self.e.set_value("0 20 * * sun")
-			for d in self.e.next_runs( datetime.datetime(2016, 1, 1), datetime.datetime(2017, 1, 1) ):
-				print d
+			datelist = [d for d in self.e.next_runs( datetime.datetime( 2016, 1, 1 ), datetime.datetime( 2017, 1, 1 ))]
+			self.assertEqual( 52, len(datelist) )
+		def test_generator_leapday_notLeapYear( self ):
+			self.e.set_value("0 0 29 * *")
+			datelist = [d for d in self.e.next_runs( datetime.datetime( 2015, 1, 1 ), datetime.datetime(2016, 1, 1 ))]
+			self.assertEqual( 11, len(datelist) )
+		def test_generator_leapday_leapYear( self ):
+			self.e.set_value("0 0 29 * *")
+			datelist = [d for d in self.e.next_runs( datetime.datetime( 2016, 1, 1 ), datetime.datetime(2017, 1, 1 ))]
+			self.assertEqual( 12, len(datelist) )
+
 
 	unittest.main()

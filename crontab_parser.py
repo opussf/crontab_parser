@@ -604,22 +604,22 @@ if __name__ == "__main__" :
 		def test_domdow_areAdditive_matches_first( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1, 0, 0 )), "Should match the 1st of the month." )
-		def test_domdow_areAdditive_matches_sun_01( self ):
+		def test_domdow_areAdditive_matches_sat_01( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 3, 0, 0 )), "Should match a Saturday." )
-		def test_domdow_areAdditive_matches_sun_02( self ):
+		def test_domdow_areAdditive_matches_sat_02( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 10, 0, 0 )), "Should match a Saturday." )
-		def test_domdow_areAdditive_matches_sun_03( self ):
+		def test_domdow_areAdditive_matches_sat_03( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 15, 0, 0 )), "Should match the 15th of the month." )
-		def test_domdow_areAdditive_matches_sun_04( self ):
+		def test_domdow_areAdditive_matches_sat_04( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 17, 0, 0 )), "Should match a Saturday." )
-		def test_domdow_areAdditive_matches_sun_05( self ):
+		def test_domdow_areAdditive_matches_sat_05( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 24, 0, 0 )), "Should match a Saturday." )
-		def test_domdow_areAdditive_matches_sun_06( self ):
+		def test_domdow_areAdditive_matches_sat_06( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 31, 0, 0 )), "Should match a Saturday." )
 

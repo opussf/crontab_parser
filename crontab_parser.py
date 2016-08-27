@@ -558,58 +558,25 @@ if __name__ == "__main__" :
 			self.e = None
 			self.e = SimpleCrontabEntry()
 			self.assertRaises( AttributeError, self.e.prev_run )
-
+		def test_noCron_set_value_clears_throwsException_matches( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry("* * * * *")
+			self.e.set_value()
+			self.assertRaises( AttributeError, self.e.matches )
+		def test_noCron_set_value_clears_throwsException_next_run( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry("* * * * *")
+			self.e.set_value()
+			self.assertRaises( AttributeError, self.e.next_run )
+		def test_noCron_set_value_clears_throwsException_prev_run( self ):
+			self.e = None
+			self.e = SimpleCrontabEntry("* * * * *")
+			self.e.set_value()
+			self.assertRaises( AttributeError, self.e.prev_run )
 
 		"""
 
-``empty`` instantiation throws exceptions on use
-
-
-
->>> e = None
->>> e = SimpleCrontabEntry()
-
->>> e.matches()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
->>> e.next_run()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
->>> e.prev_run()
-Traceback (most recent call last):
-	...
-AttributeError: Crontab needs an entry to check against
-
-
-
-``empty`` instantiation works if entry is set
-
-
-
->>> e = None
->>> e = SimpleCrontabEntry()
-
->>> e.set_value('30 8 10 6 *')
->>> e.matches(datetime(1970, 6, 10, 8, 30))
-True
-
->>> e.set_value('0 9-18 * * 1-5')
->>> e.next_run(datetime(1970, 1, 1, 11)) # 1/1/1970 is Thursday.
-datetime.datetime(1970, 1, 1, 12, 0)
-
->>> e.set_value('* 5 * * *')
->>> e.prev_run(datetime(1970, 5, 1))
-datetime.datetime(1970, 4, 30, 5, 59)
-
-
-
 ``set_value(None)`` clears the entry
-
-
 
 >>> e = None
 >>> e = SimpleCrontabEntry('* * * * *')

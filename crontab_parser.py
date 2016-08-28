@@ -294,10 +294,26 @@ if __name__ == "__main__" :
 			self.e = None
 			self.e = SimpleCrontabEntry()
 			self.assertIsNone( self.e.data, "This should still be None." )
-		def test_set_value_noneResetsObject( self ):
+		def test_set_value_noneResetsObject_thowsException_matches( self ):
 			self.e.set_value("* * * * *")
 			self.e.set_value(None)
 			self.assertRaises( AttributeError, self.e.matches )
+		def test_set_value_noneResetsObject_thowsException_next_run( self ):
+			self.e.set_value("* * * * *")
+			self.e.set_value(None)
+			self.assertRaises( AttributeError, self.e.next_run )
+		def test_set_value_noneResetsObject_thowsException_prev_run( self ):
+			self.e.set_value("* * * * *")
+			self.e.set_value(None)
+			self.assertRaises( AttributeError, self.e.prev_run )
+		def test_set_value_noneResetsObject_thowsException_next_runs( self ):
+			self.e.set_value("* * * * *")
+			self.e.set_value(None)
+			self.assertRaises( AttributeError, self.e.next_runs )
+
+
+
+
 		def test_set_value_setsFields( self ):
 			self.e.set_value("* * * * *")
 			self.assertEqual( 5, len(self.e.fields), "There needs to be 5 fields." )
@@ -569,21 +585,6 @@ if __name__ == "__main__" :
 		def test_noCron_throwsException_prev_run( self ):
 			self.e = None
 			self.e = SimpleCrontabEntry()
-			self.assertRaises( AttributeError, self.e.prev_run )
-		def test_noCron_set_value_clears_throwsException_matches( self ):
-			self.e = None
-			self.e = SimpleCrontabEntry("* * * * *")
-			self.e.set_value()
-			self.assertRaises( AttributeError, self.e.matches )
-		def test_noCron_set_value_clears_throwsException_next_run( self ):
-			self.e = None
-			self.e = SimpleCrontabEntry("* * * * *")
-			self.e.set_value()
-			self.assertRaises( AttributeError, self.e.next_run )
-		def test_noCron_set_value_clears_throwsException_prev_run( self ):
-			self.e = None
-			self.e = SimpleCrontabEntry("* * * * *")
-			self.e.set_value()
 			self.assertRaises( AttributeError, self.e.prev_run )
 		def test_generator_listcomprehension( self ):
 			self.e.set_value("0 20 * * sun")

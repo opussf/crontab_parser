@@ -108,7 +108,7 @@ class SimpleCrontabEntry( object ):
 		raise ValueError( "Time goes before epoch" )
 
 	def __iter__(self, startTime=datetime.datetime.now(), endTime=None ):
-		"""Returns an interator that lists all the times that the cronstring matches between startTime and endTime.
+		"""Returns an iterator that lists all the times that the cronstring matches between startTime and endTime.
 		If a single value is given, it will result in from now till then.
 		"""
 		try:	# use this to control

@@ -309,10 +309,8 @@ if __name__ == "__main__" :
 		def test_set_value_noneResetsObject_thowsException_next_runs( self ):
 			self.e.set_value("* * * * *")
 			self.e.set_value(None)
-			self.assertRaises( AttributeError, self.e.next_runs )
-
-
-
+			self.e.next_runs( datetime.datetime( 1970, 1, 1 ), datetime.datetime( 1970, 1, 2 ))
+			self.assertRaises( AttributeError, self.e.next )
 
 		def test_set_value_setsFields( self ):
 			self.e.set_value("* * * * *")

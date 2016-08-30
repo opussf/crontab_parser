@@ -623,6 +623,15 @@ if __name__ == "__main__" :
 		def test_domdow_areAdditive_matches_sat_06( self ):
 			self.e.set_value("0 0 1,15 * sat")
 			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 31, 0, 0 )), "Should match a Saturday." )
+		def test_domdow_areAdditive_matches_domStep_01( self ):
+			self.e.set_value("0 0 */2 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 1 )), "Should match the first." )
+		def test_domdow_areAdditive_matches_domStep_02( self ):
+			self.e.set_value("0 0 */2 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 10 )), "Should match that saturday." )
+		def test_domdow_areAdditive_matches_2step( self ):
+			self.e.set_value("0 0 */7,*/15 * sat")
+			self.assertTrue( self.e.matches( datetime.datetime( 1970, 1, 10 )), "Should match that saturday." )
 
 
 

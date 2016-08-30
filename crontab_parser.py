@@ -38,6 +38,10 @@ class SimpleCrontabEntry( object ):
 
 	def set_value( self, entry = None ):
 		self.data = entry
+		# reset the flags here
+		self.weekdayIsSpecific = True
+		self.dayIsSpecific = True
+
 		if not self.data:
 			self.fields = None
 			return
@@ -132,8 +136,6 @@ class SimpleCrontabEntry( object ):
 	#####  End of public methods
 
 	def __setup( self ):
-		self.weekdayIsSpecific = True
-		self.dayIsSpecific = True
 		self.fieldnames = {
 			"minute"  : "Minute",
 			"hour"    : "Hour",
@@ -211,7 +213,7 @@ class SimpleCrontabEntry( object ):
 				expression = re.sub("(?<!\w|/)"+ value +"(?!\w)", key, expression)
 
 		# if both the day and weekday are specific (not the * wildcard), they are additive in the match (or)
-		if re.match("\*", expression):
+		if re.match("^\*$", expression):
 			if fieldName == "weekday": self.weekdayIsSpecific = False
 			elif fieldName == "day": self.dayIsSpecific = False
 		# Replace the wildcard with a range expression
